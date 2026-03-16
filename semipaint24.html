@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SemiPaint24</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --bg:#d7d7d7;--panel:#cfcfcf;--panel2:#dcdcdc;--border:#8d8d8d;
+  --hi:#f5f5f5;--text:#222;--menu:#e6e6e6;--btn:#e0e0e0;
+  --accent:#2b6cb0;--accent2:#1a5276;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-size:13px;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* MENUBAR */
+#menubar{background:var(--menu);border-bottom:1px solid var(--border);
+  box-shadow:inset 0 1px 0 var(--hi);display:flex;align-items:center;
+  gap:2px;padding:3px 8px;flex-shrink:0;min-height:32px}
+.mg{position:relative}
+.mbtn{background:var(--btn);border:1px solid var(--border);box-shadow:inset 0 1px 0 var(--hi);
+  color:var(--text);padding:3px 10px;font:inherit;font-size:13px;cursor:pointer}
+.mbtn:hover,.mbtn.open{background:#c8d8ea;border-color:#7aacdc;outline:2px solid rgba(43,108,176,.3)}
+.mdrop{display:none;position:absolute;top:100%;left:0;background:#f1f1f1;
+  border:1px solid var(--border);box-shadow:2px 2px 0 rgba(0,0,0,.18);
+  min-width:240px;z-index:200;padding:4px}
+.mdrop.open{display:block}
+.mi{display:block;width:100%;text-align:left;border:1px solid transparent;
+  background:transparent;padding:5px 8px;font:inherit;cursor:pointer;color:var(--text)}
+.mi:hover{background:#ddeeff;border-color:#aac8ea}
+.mi:disabled{color:#aaa;cursor:default}
+.msep{height:1px;background:#c0c0c0;margin:4px 0}
+.mlbl{font-size:11px;color:#777;padding:3px 8px;letter-spacing:.5px;font-weight:600}
+.mi.ck::before{content:"✓ ";color:var(--accent);font-weight:700}
+.mi:not(.ck)::before{content:"  ";display:inline-block;width:1em}
+
+/* MAIN */
+#main{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR — accordion panels */
+#sidebar{width:230px;min-width:230px;background:var(--panel);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  overflow-y:auto;overflow-x:hidden}
+.acc{border-bottom:1px solid var(--border)}
+.acc-hdr{background:#d0d0d0;border-bottom:1px solid transparent;
+  padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:5px;user-select:none}
+.acc-hdr:hover{background:#c8d8ea}
+.acc-hdr i.icon{color:var(--accent);font-size:11px}
+.acc-hdr .chev{margin-left:auto;font-size:10px;transition:transform .2s;color:#777}
+.acc-hdr.open .chev{transform:rotate(180deg)}
+.acc-hdr.open{border-bottom:1px solid var(--border)}
+.acc-body{display:none;padding:7px}
+.acc-body.open{display:block}
+.info-row{display:flex;justify-content:space-between;font-size:12px;
+  margin:3px 0;color:#444}
+.info-row span:last-child{font-weight:600;color:var(--accent2)}
+
+/* TOOL GRID */
+#tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.tbtn{background:var(--btn);border:1px solid var(--border);box-shadow:inset 0 1px 0 var(--hi);
+  color:#444;height:40px;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;font-size:15px;transition:background .1s}
+.tbtn:hover{background:#d0e4f4;border-color:#7aacdc}
+.tbtn.act{background:#c0d8f0;border-color:var(--accent);
+  box-shadow:inset 0 0 0 2px rgba(43,108,176,.35),inset 0 1px 0 var(--hi);color:var(--accent)}
+
+/* FG/BG swatches */
+#fgbg{display:flex;align-items:center;gap:8px;padding:4px 0}
+#fgs,#bgs{height:36px;border:3px solid #555;box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+#fgs{width:54px;}
+#bgs{width:54px;border-color:#999;opacity:.85;}
+.swlbl{font-size:10px;color:#666;text-align:center;font-weight:600;margin-bottom:2px}
+.swapbtn{background:var(--btn);border:1px solid var(--border);
+  box-shadow:inset 0 1px 0 var(--hi);color:#555;padding:4px 8px;cursor:pointer;font-size:14px}
+.swapbtn:hover{background:#d0e4f4}
+
+/* PALETTE: 2 cols layout */
+#pal-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px}
+.pe{border:2px solid var(--border);background:var(--panel2)}
+.pe:hover{border-color:#7aacdc}
+.pe.act{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.pname{font-size:9px;color:#555;text-align:center;padding:2px 0;
+  text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.pcells{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;padding:3px}
+.pc{height:22px;border:1px solid rgba(0,0,0,.2);cursor:pointer}
+.pc:hover{outline:2px solid #2b6cb0}
+.pc.pca{outline:3px solid #111;outline-offset:-1px}
+/* black entry */
+.pe.pe-black .pcells{grid-template-columns:1fr}
+.pe.pe-black .pc{height:22px}
+
+/* WORKSPACE */
+#workspace{flex:1;display:flex;flex-direction:column;overflow:hidden;
+  background:repeating-linear-gradient(45deg,#dddddd 0,#dddddd 2px,#cfcfcf 2px,#cfcfcf 4px)}
+#cwrap{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:16px}
+#mc{image-rendering:pixelated;cursor:crosshair;display:block}
+#gc{position:absolute;top:0;left:0;pointer-events:none;image-rendering:pixelated}
+.cc{position:relative;display:inline-block}
+
+/* BOTTOMBAR */
+#bot{background:var(--panel);border-top:1px solid var(--border);
+  box-shadow:inset 0 1px 0 var(--hi);padding:4px 10px;
+  display:flex;align-items:center;gap:8px;flex-shrink:0}
+.zbtn{background:var(--btn);border:1px solid var(--border);box-shadow:inset 0 1px 0 var(--hi);
+  color:var(--text);width:26px;height:26px;cursor:pointer;font-size:13px;
+  display:flex;align-items:center;justify-content:center}
+.zbtn:hover{background:#c8d8ea;border-color:#7aacdc}
+#zpct{color:var(--accent);min-width:36px;text-align:center;font-weight:600;font-size:12px}
+
+/* MODAL */
+#mback{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none}
+#mback.show{display:flex;align-items:center;justify-content:center}
+.mbox{background:#f1f1f1;border:1px solid var(--border);box-shadow:6px 6px 0 rgba(0,0,0,.2);
+  padding:18px;min-width:400px;max-width:680px;max-height:88vh;overflow-y:auto}
+.mtitle{font-size:14px;font-weight:700;margin-bottom:14px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.mrow{display:flex;align-items:center;gap:10px;margin:9px 0}
+.mrow label{width:140px;font-size:12px;color:#555;font-weight:600;flex-shrink:0}
+.mrow select,.mrow input[type=range],.mrow input[type=color],.mrow input[type=number]{
+  flex:1;background:white;border:1px solid var(--border);font:inherit;padding:3px}
+.mrow input[type=range]{accent-color:var(--accent)}
+.rv{color:var(--accent);font-weight:700;min-width:36px;text-align:right;font-size:12px}
+.mbtns{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.bok{background:#2b6cb0;border:1px solid #1a5276;color:#fff;
+  padding:6px 18px;cursor:pointer;font:inherit;font-size:12px;font-weight:600}
+.bok:hover{background:#1a5276}
+.bcancel{background:var(--btn);border:1px solid var(--border);box-shadow:inset 0 1px 0 var(--hi);
+  color:var(--text);padding:6px 16px;cursor:pointer;font:inherit}
+.bcancel:hover{background:#d0e4f4}
+.mhelp{font-size:11px;color:#666;margin:6px 0;line-height:1.5}
+/* Convert preview: big side-by-side */
+#prev-area{display:flex;gap:12px;margin:10px 0}
+.pv-col{display:flex;flex-direction:column;align-items:center;flex:1}
+.pv-lbl{font-size:10px;color:#555;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:4px;text-align:center}
+.pv-col canvas{image-rendering:pixelated;border:2px solid var(--border);
+  width:100%;display:block}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="menubar">
+
+  <div class="mg"><button class="mbtn" id="mb-file">File</button>
+    <div class="mdrop" id="md-file">
+      <div class="mlbl">Project</div>
+      <button class="mi" id="mi-new">New…</button>
+      <button class="mi" id="mi-opens24">Open .S24 File…</button>
+      <button class="mi" id="mi-openimg">Convert Image to SG24…</button>
+      <div class="msep"></div>
+      <div class="mlbl">Export</div>
+      <button class="mi" id="mi-saves24">Save .S24 File</button>
+      <button class="mi" id="mi-savepng">Export PNG…</button>
+      <button class="mi" id="mi-savebmp">Export BMP…</button>
+      <div class="msep"></div>
+      <button class="mi" id="mi-savebas">Export CoCo BASIC (.BAS)…</button>
+      <button class="mi" id="mi-saveasm">Export Assembly Source…</button>
+    </div>
+  </div>
+
+  <div class="mg"><button class="mbtn" id="mb-edit">Edit</button>
+    <div class="mdrop" id="md-edit">
+      <button class="mi" id="mi-undo">Undo <span style="color:#888">Ctrl+Z</span></button>
+      <button class="mi" id="mi-redo">Redo <span style="color:#888">Ctrl+Y</span></button>
+      <div class="msep"></div>
+      <button class="mi" id="mi-clear">Clear Canvas</button>
+      <button class="mi" id="mi-fillall">Fill All with FG Color</button>
+      <div class="msep"></div>
+      <button class="mi" id="mi-invert">Invert Elements</button>
+    </div>
+  </div>
+
+  <div class="mg"><button class="mbtn" id="mb-view">View</button>
+    <div class="mdrop" id="md-view">
+      <div class="mlbl">Aspect Ratio</div>
+      <button class="mi ck" id="mi-coco">CoCo 4:3 Display</button>
+      <button class="mi" id="mi-modern">Square Pixels (1:1)</button>
+      <div class="msep"></div>
+      <div class="mlbl">Grid</div>
+      <button class="mi ck" id="mi-gcell">Character Cell Grid</button>
+      <button class="mi ck" id="mi-gpix">Pixel Grid</button>
+      <button class="mi" id="mi-gsnap">Snap to Grid</button>
+      <button class="mi" id="mi-gset">Grid Settings…</button>
+      <div class="msep"></div>
+      <div class="mlbl">Zoom</div>
+      <button class="mi" id="mi-zin">Zoom In <span style="color:#888">+</span></button>
+      <button class="mi" id="mi-zout">Zoom Out <span style="color:#888">-</span></button>
+      <button class="mi" id="mi-zfit">Fit to Window</button>
+      <button class="mi" id="mi-z1">100% (1×)</button>
+      <button class="mi" id="mi-z2">200% (2×)</button>
+      <button class="mi" id="mi-z4">400% (4×)</button>
+    </div>
+  </div>
+
+  <div class="mg"><button class="mbtn" id="mb-help">Help</button>
+    <div class="mdrop" id="md-help">
+      <button class="mi" id="mi-about">About SemiPaint24…</button>
+    </div>
+  </div>
+
+  <div style="flex:1"></div>
+  <div style="display:flex;gap:10px;align-items:center;font-size:12px;color:#555">
+    <span>Tool: <b id="st-tool" style="color:var(--accent)">Pencil</b></span>
+    <span style="color:#bbb">|</span>
+    <span>Zoom: <b id="st-zoom" style="color:var(--accent)">4×</b></span>
+    <span style="color:#bbb">|</span>
+    <span>Aspect: <b id="st-asp" style="color:var(--accent)">CoCo 4:3</b></span>
+  </div>
+</div>
+
+<div id="main">
+  <div id="sidebar">
+
+    <!-- Information accordion -->
+    <div class="acc">
+      <div class="acc-hdr open" data-panel="info">
+        <i class="icon fa-solid fa-circle-info"></i> Information
+        <i class="chev fa-solid fa-chevron-down"></i>
+      </div>
+      <div class="acc-body open" id="panel-info">
+        <div class="info-row"><span>Resolution</span><span>64 × 192 px</span></div>
+        <div class="info-row"><span>Cells</span><span>32 × 192</span></div>
+        <div class="info-row"><span>Colors</span><span>8 + Black</span></div>
+        <div class="info-row"><span>Memory</span><span>6,144 bytes</span></div>
+        <div class="info-row"><span>Zoom</span><span id="iz">4×</span></div>
+        <div class="info-row"><span>Aspect</span><span id="iasp">CoCo 4:3</span></div>
+        <div class="info-row"><span>Grid</span><span id="igrid">Off</span></div>
+        <div class="info-row"><span>Snap</span><span id="isnap">Off</span></div>
+      </div>
+    </div>
+
+    <!-- Tools accordion -->
+    <div class="acc">
+      <div class="acc-hdr open" data-panel="tools">
+        <i class="icon fa-solid fa-wrench"></i> Tools
+        <i class="chev fa-solid fa-chevron-down"></i>
+      </div>
+      <div class="acc-body open" id="panel-tools">
+        <div id="tool-grid">
+          <button class="tbtn act" data-tool="pencil" title="Pencil (P)"><i class="fa-solid fa-pencil"></i></button>
+          <button class="tbtn" data-tool="fill"       title="Flood Fill (F)"><i class="fa-solid fa-fill-drip"></i></button>
+          <button class="tbtn" data-tool="picker"     title="Eyedropper (K)"><i class="fa-solid fa-eye-dropper"></i></button>
+          <button class="tbtn" data-tool="line"       title="Line (L)"><i class="fa-solid fa-slash"></i></button>
+          <button class="tbtn" data-tool="rect"       title="Rectangle (R)"><i class="fa-regular fa-square"></i></button>
+          <button class="tbtn" data-tool="rectfill"   title="Filled Rect"><i class="fa-solid fa-square"></i></button>
+          <button class="tbtn" data-tool="circle"     title="Circle (C)"><i class="fa-regular fa-circle"></i></button>
+          <button class="tbtn" data-tool="circlefill" title="Filled Circle"><i class="fa-solid fa-circle"></i></button>
+          <button class="tbtn" data-tool="eraser"     title="Eraser (E)"><i class="fa-solid fa-eraser"></i></button>
+          <button class="tbtn" data-tool="pan"        title="Pan (Space)"><i class="fa-solid fa-hand"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Colors accordion -->
+    <div class="acc">
+      <div class="acc-hdr open" data-panel="colors">
+        <i class="icon fa-solid fa-palette"></i> Active Colors
+        <i class="chev fa-solid fa-chevron-down"></i>
+      </div>
+      <div class="acc-body open" id="panel-colors">
+        <div id="fgbg">
+          <div style="text-align:center">
+            <div class="swlbl">FG</div><div id="fgs"></div>
+          </div>
+          <button class="swapbtn" id="swapbtn" title="Swap FG ↔ BG">⇄</button>
+          <div style="text-align:center">
+            <div class="swlbl">BG</div><div id="bgs"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Palette accordion -->
+    <div class="acc">
+      <div class="acc-hdr open" data-panel="pal">
+        <i class="icon fa-solid fa-swatchbook"></i> SG24 Palette
+        <i class="chev fa-solid fa-chevron-down"></i>
+      </div>
+      <div class="acc-body open" id="panel-pal">
+        <div id="pal-grid"><!-- JS --></div>
+      </div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <div id="workspace">
+    <div id="cwrap">
+      <div class="cc" id="cc">
+        <canvas id="mc" width="64" height="192"></canvas>
+        <canvas id="gc" width="64" height="192"></canvas>
+      </div>
+    </div>
+    <div id="bot">
+      <button class="zbtn" id="bzo"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+      <span id="zpct">4×</span>
+      <button class="zbtn" id="bzi"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+    </div>
+  </div>
+</div>
+</div><!-- /app -->
+
+<!-- MODALS -->
+<div id="mback">
+
+  <!-- Convert Modal -->
+  <div class="mbox" id="m-conv" style="display:none">
+    <div class="mtitle"><i class="fa-solid fa-image"></i> Convert Image to SG24</div>
+    <div class="mhelp">Source image scaled to 64×192 and quantised to the MC6847 8-color palette.
+      Preview shows the result at 200% in CoCo 4:3 aspect.</div>
+    <div id="prev-area">
+      <div class="pv-col" style="flex:1.2">
+        <div class="pv-lbl">Source</div>
+        <canvas id="pv-src" width="128" height="192"></canvas>
+      </div>
+      <div class="pv-col" style="flex:1">
+        <div class="pv-lbl">SG24 Preview (4:3, 200%)</div>
+        <canvas id="pv-dst" width="128" height="192"></canvas>
+      </div>
+    </div>
+    <div class="mrow"><label>Dithering</label>
+      <select id="cv-dither">
+        <option value="none">None (Nearest Color)</option>
+        <option value="atkinson" selected>Atkinson (Recommended)</option>
+        <option value="floyd">Floyd-Steinberg</option>
+        <option value="ordered2">Ordered Bayer 2×2</option>
+        <option value="ordered4">Ordered Bayer 4×4</option>
+        <option value="checker">Checkerboard + Atkinson</option>
+        <option value="blue">Blue Noise</option>
+      </select></div>
+    <div class="mrow"><label>Brightness</label>
+      <input type="range" id="cv-bright" min="0.2" max="2.0" step="0.05" value="1.0">
+      <span class="rv" id="rv-bright">1.00</span></div>
+    <div class="mrow"><label>Contrast</label>
+      <input type="range" id="cv-contrast" min="0.2" max="3.0" step="0.05" value="1.0">
+      <span class="rv" id="rv-contrast">1.00</span></div>
+    <div class="mrow"><label>Saturation</label>
+      <input type="range" id="cv-sat" min="0.0" max="3.0" step="0.05" value="1.0">
+      <span class="rv" id="rv-sat">1.00</span></div>
+    <div class="mrow"><label>Checker Strength</label>
+      <input type="range" id="cv-checker" min="0.0" max="1.0" step="0.05" value="0.0">
+      <span class="rv" id="rv-checker">0.00</span></div>
+    <div class="mbtns">
+      <button class="bcancel" id="btn-cprev">Preview</button>
+      <button class="bcancel" id="btn-ccancel">Cancel</button>
+      <button class="bok" id="btn-capply">Convert</button>
+    </div>
+  </div>
+
+  <!-- Grid Settings Modal -->
+  <div class="mbox" id="m-grid" style="display:none">
+    <div class="mtitle"><i class="fa-solid fa-table-cells"></i> Grid Settings</div>
+    <div class="mrow"><label>Character Cell Grid</label>
+      <input type="checkbox" id="gs-cell" checked style="width:auto;flex:none"></div>
+    <div class="mrow"><label>Pixel Grid</label>
+      <input type="checkbox" id="gs-pix" checked style="width:auto;flex:none"></div>
+    <div class="mrow"><label>Snap to Grid</label>
+      <input type="checkbox" id="gs-snap" style="width:auto;flex:none"></div>
+    <div class="mrow"><label>Grid Size (cells)</label>
+      <input type="number" id="gs-size" min="1" max="32" value="1" style="width:70px;flex:none">
+      <span style="font-size:11px;color:#777;margin-left:4px">cells (2 display-px each)</span></div>
+    <div class="mrow"><label>Cell Grid Color</label>
+      <input type="color" id="gs-ccol" value="#3399cc" style="width:50px;height:28px;flex:none"></div>
+    <div class="mrow"><label>Pixel Grid Color</label>
+      <input type="color" id="gs-pcol" value="#aaaaaa" style="width:50px;height:28px;flex:none"></div>
+    <div class="mrow"><label>Grid Opacity</label>
+      <input type="range" id="gs-opac" min="0.03" max="0.6" step="0.01" value="0.25">
+      <span class="rv" id="rv-opac">0.25</span></div>
+    <div class="mbtns">
+      <button class="bcancel" id="btn-gcancel">Cancel</button>
+      <button class="bok" id="btn-gok">OK</button>
+    </div>
+  </div>
+
+  <!-- About Modal -->
+  <div class="mbox" id="m-about" style="display:none">
+    <div class="mtitle">About SemiPaint24</div>
+    <div class="mhelp" style="line-height:1.9;color:#444">
+      <strong style="font-size:14px">SemiPaint24</strong><br>
+      TRS-80 Color Computer Semigraphics 24 Image Editor<br><br>
+      Copyright © 2025 Carlos Alberto Camacho<br>
+      Released under the MIT License<br><br>
+      <strong>Hardware:</strong> Motorola MC6847 VDG + MC6883 SAM<br>
+      <strong>Resolution:</strong> 64×192 pixels / 32×192 cells (2px × 1px per cell)<br>
+      <strong>Memory:</strong> 6,144 bytes — 192 scan lines × 32 chars<br>
+      <strong>Colors:</strong> 8 (CSS=0): Green · Yellow · Blue · Red · Buff · Cyan · Magenta · Orange<br>
+      <strong>Byte format:</strong> D7=SG flag · D6–D4=color · D3=left · D2=right · D1D0=don't care<br>
+      <strong>BASIC export:</strong> Hex-string packed for minimum memory usage
+    </div>
+    <div class="mbtns"><button class="bok" id="btn-aok">OK</button></div>
+  </div>
+
+</div><!-- /mback -->
+
+<input type="file" id="fi-s24" accept=".s24,.S24" hidden>
+<input type="file" id="fi-img" accept=".png,.bmp,.jpg,.jpeg,.gif" hidden>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════
+// CONSTANTS (MC6847 Figure 21 confirmed)
+// ══════════════════════════════════════════════════════════
+const WC=32,HC=192,WP=64,HP=192;
+
+// MC6847 CSS=0: 0=Green,1=Yellow,2=Blue,3=Red,4=Buff,5=Cyan,6=Magenta,7=Orange
+const CIDEAL=[[0,255,0],[255,255,0],[0,0,255],[255,0,0],[255,255,255],[0,255,255],[255,0,255],[255,128,0]];
+const CDISP =[[0,211,0],[213,213,0],[32,32,209],[211,32,32],[255,255,255],[32,213,213],[211,32,211],[213,100,0]];
+const CNAME =['Green','Yellow','Blue','Red','Buff','Cyan','Magenta','Orange'];
+const CBLK  =[0,0,0];
+const BPX   =0x00; // internal black pixel
+
+// Pixel storage: encPx(color,on) => color<<1|on  (5 bits: color in bits4-2, on in bit1)
+// Both left and right slots use SAME encoding — bit1 = element on
+function ep(c,on){return((c&7)<<1)|(on?1:0)}
+function dc(v){return(v>>1)&7}
+function don(v){return v&1}
+
+function gpx(x,y){if(x<0||y<0||x>=WP||y>=HP)return 0;return S.px[y*WP+x]}
+function spx(x,y,v){if(x<0||y<0||x>=WP||y>=HP)return;S.px[y*WP+x]=v}
+
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+const S={
+  tool:'pencil',
+  fg:{c:3,sub:'full'},   // color index, sub: full/left/right/black
+  bg:{c:0,sub:'black'},
+  zoom:4, aspect:'coco',
+  showCG:true, showPG:true, snapG:false,
+  gridSz:1, gcol:'#3399cc', pcol:'#aaaaaa', gopac:0.25,
+  px:new Uint8Array(WP*HP),
+  undo:[],redo:[],
+  dn:false,sx:0,sy:0,lpx:0,lpy:0,
+  shSnap:null,panSt:null,
+  srcImg:null,srcW:0,srcH:0,pendConv:null,
+  convDither:'atkinson',convBright:1,convContrast:1,convSat:1,convChecker:0,
+};
+
+// ══════════════════════════════════════════════════════════
+// CANVAS + RENDER
+// ══════════════════════════════════════════════════════════
+const MC=document.getElementById('mc'),CTX=MC.getContext('2d');
+const GC=document.getElementById('gc'),GCX=GC.getContext('2d');
+
+function applyAspect(){
+  const z=S.zoom,sx=S.aspect==='coco'?(4/3)/(WP/HP):1;
+  const W=Math.round(WP*z*sx),H=Math.round(HP*z);
+  MC.style.width=W+'px';MC.style.height=H+'px';
+  GC.style.width=W+'px';GC.style.height=H+'px';
+}
+
+function setZoom(z){
+  S.zoom=Math.max(1,Math.min(16,z));
+  const zs=S.zoom+'×';
+  document.getElementById('st-zoom').textContent=zs;
+  document.getElementById('zpct').textContent=zs;
+  document.getElementById('iz').textContent=zs;
+  applyAspect();drawGrid();
+}
+
+function render(){
+  const img=CTX.createImageData(WP,HP),d=img.data;
+  for(let y=0;y<HP;y++){
+    for(let x=0;x<WP;x++){
+      const v=S.px[y*WP+x];
+      const rgb=don(v)?CDISP[dc(v)]:CBLK;
+      const i=(y*WP+x)*4;
+      d[i]=rgb[0];d[i+1]=rgb[1];d[i+2]=rgb[2];d[i+3]=255;
+    }
+  }
+  CTX.putImageData(img,0,0);
+}
+
+function h2rgba(hex,a){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return`rgba(${r},${g},${b},${a})`;
+}
+
+function drawGrid(){
+  const z=S.zoom;
+  GC.width=WP;GC.height=HP;
+  applyAspect();
+  GCX.clearRect(0,0,WP,HP);
+  if(z<2)return;
+  // pixel grid
+  if(S.showPG&&z>=4){
+    GCX.strokeStyle=h2rgba(S.pcol,S.gopac*0.6);
+    GCX.lineWidth=1/z;
+    for(let x=0;x<=WP;x++){GCX.beginPath();GCX.moveTo(x,0);GCX.lineTo(x,HP);GCX.stroke()}
+    for(let y=0;y<=HP;y++){GCX.beginPath();GCX.moveTo(0,y);GCX.lineTo(WP,y);GCX.stroke()}
+  }
+  // cell grid
+  if(S.showCG&&z>=2){
+    GCX.strokeStyle=h2rgba(S.gcol,S.gopac);
+    GCX.lineWidth=1.5/z;
+    const stepX=S.gridSz*2,stepY=S.gridSz;
+    for(let x=0;x<=WP;x+=stepX){GCX.beginPath();GCX.moveTo(x,0);GCX.lineTo(x,HP);GCX.stroke()}
+    for(let y=0;y<=HP;y+=stepY){GCX.beginPath();GCX.moveTo(0,y);GCX.lineTo(WP,y);GCX.stroke()}
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// UNDO/REDO
+// ══════════════════════════════════════════════════════════
+function pu(){S.undo.push(S.px.slice());if(S.undo.length>50)S.undo.shift();S.redo=[]}
+function undo(){if(!S.undo.length)return;S.redo.push(S.px.slice());S.px=S.undo.pop();render()}
+function redo(){if(!S.redo.length)return;S.undo.push(S.px.slice());S.px=S.redo.pop();render()}
+
+// ══════════════════════════════════════════════════════════
+// PAINTING
+// ══════════════════════════════════════════════════════════
+function paintCell(x,y,col,sub){
+  const cx=Math.floor(x/2)*2;
+  if(sub==='black'){spx(cx,y,BPX);spx(cx+1,y,BPX)}
+  else if(sub==='full'){spx(cx,y,ep(col,true));spx(cx+1,y,ep(col,true))}
+  else if(sub==='left'){spx(cx,y,ep(col,true));spx(cx+1,y,BPX)}
+  else{spx(cx,y,BPX);spx(cx+1,y,ep(col,true))}  // right
+}
+
+function drawLine(x0,y0,x1,y1,col,sub){
+  let dx=Math.abs(x1-x0),sx=x0<x1?1:-1,dy=-Math.abs(y1-y0),sy=y0<y1?1:-1,e=dx+dy;
+  for(;;){paintCell(x0,y0,col,sub);if(x0===x1&&y0===y1)break;
+    const e2=2*e;if(e2>=dy){e+=dy;x0+=sx}if(e2<=dx){e+=dx;y0+=sy}}
+}
+
+function drawRect(x0,y0,x1,y1,col,sub,fill){
+  const mnx=Math.min(x0,x1),mxx=Math.max(x0,x1),mny=Math.min(y0,y1),mxy=Math.max(y0,y1);
+  for(let y=mny;y<=mxy;y++)
+    for(let x=mnx;x<=mxx;x++)
+      if(fill||x===mnx||x===mxx||y===mny||y===mxy)paintCell(x,y,col,sub);
+}
+
+function drawCircle(cx0,cy0,x1,y1,col,sub,fill){
+  const rx=Math.abs(x1-cx0)||1,ry=Math.abs(y1-cy0)||1;
+  for(let y=cy0-ry;y<=cy0+ry;y++)
+    for(let x=cx0-rx;x<=cx0+rx;x++){
+      const d=(x-cx0)*(x-cx0)/rx/rx+(y-cy0)*(y-cy0)/ry/ry;
+      if(fill?d<=1:d<=1.05&&d>=0.72)paintCell(x,y,col,sub);
+    }
+}
+
+function fill(x,y,col,sub){
+  const cx=Math.floor(x/2)*2;
+  const tL=gpx(cx,y),tR=gpx(cx+1,y);
+  const nL=sub==='black'||sub==='right'?BPX:ep(col,true);
+  const nR=sub==='black'||sub==='left'?BPX:ep(col,true);
+  if(nL===tL&&nR===tR)return;
+  const seen=new Uint8Array(WC*HC);
+  const stk=[Math.floor(x/2)+y*WC];
+  while(stk.length){
+    const idx=stk.pop();if(seen[idx])continue;seen[idx]=1;
+    const cx2=(idx%WC)*2,cy2=Math.floor(idx/WC);
+    if(gpx(cx2,cy2)!==tL||gpx(cx2+1,cy2)!==tR)continue;
+    spx(cx2,cy2,nL);spx(cx2+1,cy2,nR);
+    const cx2c=idx%WC;
+    if(cx2c>0)stk.push(idx-1);if(cx2c<WC-1)stk.push(idx+1);
+    if(cy2>0)stk.push(idx-WC);if(cy2<HC-1)stk.push(idx+WC);
+  }
+}
+
+function snapX(x){if(!S.snapG)return x;const s=S.gridSz*2;return Math.round(x/s)*s}
+function snapY(y){if(!S.snapG)return y;return Math.round(y/S.gridSz)*S.gridSz}
+
+// ══════════════════════════════════════════════════════════
+// S24 FORMAT
+// ══════════════════════════════════════════════════════════
+function toS24(){
+  const buf=new Uint8Array(HC*WC);
+  for(let row=0;row<HC;row++){
+    for(let col=0;col<WC;col++){
+      const lx=col*2;
+      const lv=S.px[row*WP+lx],rv=S.px[row*WP+lx+1];
+      const lOn=don(lv),rOn=don(rv);
+      if(!lOn&&!rOn){buf[row*WC+col]=0x20;continue}
+      const color=lOn?dc(lv):dc(rv);
+      buf[row*WC+col]=0x80|(color<<4)|(lOn?8:0)|(rOn?4:0)|3;
+    }
+  }
+  return buf;
+}
+
+function fromS24(buf){
+  const pix=new Uint8Array(WP*HP);
+  for(let row=0;row<HC;row++){
+    for(let col=0;col<WC;col++){
+      const b=buf[row*WC+col],lx=col*2;
+      if(!(b&0x80)){continue} // stays BPX=0
+      const color=(b>>4)&7,lOn=(b>>3)&1,rOn=(b>>2)&1;
+      pix[row*WP+lx]=ep(color,lOn);pix[row*WP+lx+1]=ep(color,rOn);
+    }
+  }
+  return pix;
+}
+
+// ══════════════════════════════════════════════════════════
+// IMAGE CONVERSION  — cell-level processing (FIXED)
+// ══════════════════════════════════════════════════════════
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const B4=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+function bn(x,y){return((Math.sin(x*12.9898+y*78.233)*43758.5453)%1+1)%1}
+
+function nearSG(r,g,b){
+  let best=0,bd=1e9;
+  for(let i=0;i<8;i++){const c=CIDEAL[i];const d=(r-c[0])**2+(g-c[1])**2+(b-c[2])**2;if(d<bd){bd=d;best=i}}
+  return best;
+}
+function dblk(r,g,b){return r*r+g*g+b*b}
+
+function adjPx(src,br,co,sa){
+  const out=new Float32Array(src.length);
+  for(let i=0;i<src.length;i+=4){
+    let r=src[i]/255*br,g=src[i+1]/255*br,b=src[i+2]/255*br;
+    r=(r-.5)*co+.5;g=(g-.5)*co+.5;b=(b-.5)*co+.5;
+    const l=.299*r+.587*g+.114*b;
+    r=l+(r-l)*sa;g=l+(g-l)*sa;b=l+(b-l)*sa;
+    out[i]=clamp(r,0,1)*255;out[i+1]=clamp(g,0,1)*255;out[i+2]=clamp(b,0,1)*255;out[i+3]=255;
+  }
+  return out;
+}
+
+function addE(err,x,y,W,H,er,eg,eb){
+  if(x<0||x>=W||y<0||y>=H)return;
+  const i=(y*W+x)*3;err[i]+=er;err[i+1]+=eg;err[i+2]+=eb;
+}
+
+// FIXED conversion: work at CELL level (32 wide × 192 tall)
+// For each cell, average the two pixel columns, pick best color,
+// decide left/right/full/black based on individual pixel brightness.
+// Checker pre-darkening applies to CELLS, not individual pixels.
+function convertImg(raw,opts){
+  const{dither,bright,contrast,sat,checker}=opts;
+  const W=WP,H=HP,CW=WC; // cell width = 32
+  const adj=adjPx(raw,bright,contrast,sat);
+
+  // Apply checker pre-darkening to CELLS (every other cell row)
+  // checker darkens alternating CELLS (cx+cy)%2===1, not individual pixels
+  const work=adj.slice();
+  if(checker>0){
+    for(let cy=0;cy<H;cy++){
+      for(let cx=0;cx<CW;cx++){
+        if((cx+cy)%2===1){
+          const lx=cx*2;
+          for(let p=lx;p<=lx+1;p++){
+            const i=(cy*W+p)*4;
+            work[i]*=(1-checker);work[i+1]*=(1-checker);work[i+2]*=(1-checker);
+          }
+        }
+      }
+    }
+  }
+
+  const pix=new Uint8Array(W*H);
+  // Error diffusion at CELL level (cx, cy) — 32×192 grid
+  const err=new Float32Array(CW*H*3); // per-cell error
+
+  for(let cy=0;cy<H;cy++){
+    for(let cx=0;cx<CW;cx++){
+      const lx=cx*2;
+      // Average of left and right source pixels for this cell
+      const il=(cy*W+lx)*4, ir=(cy*W+lx+1)*4;
+      const avgR=(work[il]+work[ir])/2;
+      const avgG=(work[il+1]+work[ir+1])/2;
+      const avgB=(work[il+2]+work[ir+2])/2;
+
+      // Add accumulated cell error
+      const ei=(cy*CW+cx)*3;
+      let r=avgR+err[ei],g=avgG+err[ei+1],b=avgB+err[ei+2];
+
+      // Apply ordered/noise offsets (per cell)
+      let dr=0,dg=0,db=0;
+      if(dither==='ordered4'){const t=(B4[cy%4][cx%4]/16-.5)*80;dr=dg=db=t}
+      else if(dither==='blue'){const t=(bn(cx,cy)-.5)*80;dr=dg=db=t}
+      else if(dither==='checker'&&(cx+cy)%2===1){dr=dg=db=-200}
+
+      const qr=clamp(r+dr,0,255),qg=clamp(g+dg,0,255),qb=clamp(b+db,0,255);
+
+      // Pick nearest SG24 color
+      const col=nearSG(qr,qg,qb);
+      const cRGB=CIDEAL[col];
+      const dColor=(qr-cRGB[0])**2+(qg-cRGB[1])**2+(qb-cRGB[2])**2;
+      const dBlack=dblk(qr,qg,qb);
+
+      // Cell is colored or black?
+      if(dColor>dBlack){
+        // Black cell
+        pix[cy*W+lx]=BPX;pix[cy*W+lx+1]=BPX;
+        // Error from both pixels
+        const er=r+dr,eg=g+dg,eb=b+db;
+        spreadCellErr(err,cx,cy,CW,H,er,eg,eb,dither);
+      } else {
+        // Colored cell — decide full vs left/right using individual pixel brightness
+        const lR=work[il],lG=work[il+1],lB=work[il+2];
+        const rR=work[ir],rG=work[ir+1],rB=work[ir+2];
+        const lBri=(lR*299+lG*587+lB*114)/1000;
+        const rBri=(rR*299+rG*587+rB*114)/1000;
+        const avgBri=(lBri+rBri)/2;
+
+        // Threshold: if individual pixel is <35% of average brightness -> that half is black
+        let lOn=lBri>=avgBri*0.35;
+        let rOn=rBri>=avgBri*0.35;
+        // Never both off (we already know cell is colored)
+        if(!lOn&&!rOn){lOn=true;rOn=true}
+
+        pix[cy*W+lx]  =ep(col,lOn);
+        pix[cy*W+lx+1]=ep(col,rOn);
+
+        // Compute actual vs target error at cell level
+        const aR=lOn&&rOn?cRGB[0]:lOn||rOn?cRGB[0]*0.5:0;
+        const aG=lOn&&rOn?cRGB[1]:lOn||rOn?cRGB[1]*0.5:0;
+        const aB=lOn&&rOn?cRGB[2]:lOn||rOn?cRGB[2]*0.5:0;
+        spreadCellErr(err,cx,cy,CW,H,r+dr-aR,g+dg-aG,b+db-aB,dither);
+      }
+    }
+  }
+  return pix;
+}
+
+function spreadCellErr(err,cx,cy,CW,H,er,eg,eb,dither){
+  if(dither==='floyd'){
+    addE(err,cx+1,cy,CW,H,er*7/16,eg*7/16,eb*7/16);
+    addE(err,cx-1,cy+1,CW,H,er*3/16,eg*3/16,eb*3/16);
+    addE(err,cx,cy+1,CW,H,er*5/16,eg*5/16,eb*5/16);
+    addE(err,cx+1,cy+1,CW,H,er/16,eg/16,eb/16);
+  } else if(dither==='atkinson'||(dither==='checker'&&(cx+cy)%2===0)){
+    const f=1/8;
+    addE(err,cx+1,cy,CW,H,er*f,eg*f,eb*f);addE(err,cx+2,cy,CW,H,er*f,eg*f,eb*f);
+    addE(err,cx-1,cy+1,CW,H,er*f,eg*f,eb*f);addE(err,cx,cy+1,CW,H,er*f,eg*f,eb*f);
+    addE(err,cx+1,cy+1,CW,H,er*f,eg*f,eb*f);addE(err,cx,cy+2,CW,H,er*f,eg*f,eb*f);
+  }
+}
+
+function scaleToSG24(id,sw,sh){
+  const off=document.createElement('canvas');off.width=WP;off.height=HP;
+  const oc=off.getContext('2d');
+  const src=document.createElement('canvas');src.width=sw;src.height=sh;
+  src.getContext('2d').putImageData(id,0,0);
+  oc.drawImage(src,0,0,WP,HP);
+  return oc.getImageData(0,0,WP,HP).data;
+}
+
+// ══════════════════════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════════════════════
+function dlFile(blob,name){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},200);
+}
+
+function expPNG(){
+  const sc=4,o=document.createElement('canvas');o.width=WP*sc;o.height=HP*sc;
+  const oc=o.getContext('2d');oc.imageSmoothingEnabled=false;oc.drawImage(MC,0,0,WP*sc,HP*sc);
+  o.toBlob(b=>dlFile(b,'sg24.png'),'image/png');
+}
+
+function expBMP(){
+  const sc=2,sw=WP*sc,sh=HP*sc,rs=((sw*3+3)>>2)<<2,is=rs*sh,fs=54+is;
+  const ab=new ArrayBuffer(fs),dv=new DataView(ab),u8=new Uint8Array(ab);
+  u8[0]=0x42;u8[1]=0x4D;dv.setUint32(2,fs,true);dv.setUint32(10,54,true);
+  dv.setUint32(14,40,true);dv.setInt32(18,sw,true);dv.setInt32(22,sh,true);
+  dv.setUint16(26,1,true);dv.setUint16(28,24,true);dv.setUint32(34,is,true);
+  dv.setInt32(38,2835,true);dv.setInt32(42,2835,true);
+  let dst=54;
+  for(let y=sh-1;y>=0;y--){
+    let row=dst;const sy=Math.floor(y/sc);
+    for(let x=0;x<sw;x++){
+      const sx=Math.floor(x/sc);const v=S.px[sy*WP+sx];
+      const rgb=don(v)?CDISP[dc(v)]:CBLK;
+      u8[row++]=rgb[2];u8[row++]=rgb[1];u8[row++]=rgb[0];
+    }
+    while(row-dst<rs)u8[row++]=0;dst+=rs;
+  }
+  dlFile(new Blob([ab],{type:'image/bmp'}),'sg24.bmp');
+}
+
+// BASIC export: hex-string packed to minimize memory usage
+// Each DATA line holds 32 bytes as a 64-char hex string
+// 6144 / 32 = 192 DATA lines (vs 614 with decimal values — 3× fewer!)
+// CoCo BASIC reader: READ H$, unpack 2-char hex pairs with VAL("&H"+MID$)
+function expBAS(){
+  const buf=toS24();
+  const lines=[
+    `10 ' SEMIPAINT24 - HEX PACKED DATA`,
+    `20 ' EACH DATA LINE = 32 BYTES AS 64-CHAR HEX STRING`,
+    `30 PCLEAR4:PMODE4,1`,
+    `40 POKE178,32:LINE(0,0)-(255,191),PSET,BF:SCREEN1,0`,
+    `50 POKE359,57:POKE65314,PEEK(65314)AND&HF:POKE&HFF9C,&HA`,
+    `60 P=1024`,
+    `70 READ H$:IF H$="END" THEN 110`,
+    `80 FOR I=1 TO 64 STEP 2`,
+    `90 POKE P,VAL("&H"+MID$(H$,I,2)):P=P+1`,
+    `100 NEXT I:GOTO 70`,
+    `110 GOTO 110`,
+    `1000 ' DATA`
+  ];
+  let ln=1010;
+  for(let i=0;i<buf.length;i+=32){
+    let h='';
+    for(let j=0;j<32&&i+j<buf.length;j++)h+=buf[i+j].toString(16).padStart(2,'0').toUpperCase();
+    lines.push(`${ln} DATA "${h}"`);ln+=10;
+  }
+  lines.push(`${ln} DATA "END"`);
+  dlFile(new Blob([lines.join('\r\n')],{type:'text/plain'}),'sg24.BAS');
+}
+
+function expASM(){
+  const buf=toS24();
+  const lines=[
+    '; SemiPaint24 — Assembly Output',
+    '; LWASM for TRS-80 Color Computer',
+    '','        ORG     $3E00',
+    'START   PSHS    X,Y,U,A,B',
+    '        LDA     #57:STA $0167',
+    '        LDA     $FF22:ANDA #$0F:STA $FF22',
+    '        LDA     #$0A:STA $FF9C:STA $FFD5:STA $FFD3:CLR $FFD0',
+    '        LDX     #$0400','        LDY     #PICDATA',
+    'DRAW    LDD     ,Y++:STD ,X++:CMPX #$1C00:BNE DRAW',
+    'SPIN    BRA     SPIN','        PULS    X,Y,U,A,B:RTS','','PICDATA'
+  ];
+  for(let i=0;i<buf.length;i+=32){
+    const ch=[];
+    for(let j=0;j<32&&i+j<buf.length;j++)ch.push('$'+buf[i+j].toString(16).padStart(2,'0').toUpperCase());
+    lines.push('\tfcb\t'+ch.join(','));
+  }
+  lines.push('\n        END     START');
+  dlFile(new Blob([lines.join('\n')],{type:'text/plain'}),'sg24.asm');
+}
+
+// ══════════════════════════════════════════════════════════
+// PALETTE UI
+// ══════════════════════════════════════════════════════════
+// Layout: 2 cols
+// Row 0: Green, Yellow
+// Row 1: Blue, Red
+// Row 2: Buff, Cyan
+// Row 3: Magenta, Orange
+// Row 4 (full width): Black
+
+function buildPalette(){
+  const g=document.getElementById('pal-grid');g.innerHTML='';
+  // 8 colors in 2 columns
+  for(let i=0;i<8;i++){
+    const rgb=CDISP[i];
+    const hex='#'+rgb.map(v=>v.toString(16).padStart(2,'0')).join('');
+    const e=document.createElement('div');
+    e.className='pe';e.id='pe-'+i;
+    const nm=document.createElement('div');nm.className='pname';nm.textContent=CNAME[i];
+    e.appendChild(nm);
+    const cells=document.createElement('div');cells.className='pcells';
+    // 3 sub-cells: full, left, right
+    const subs=[
+      {s:'full', bg:hex,        lbl:'Both'},
+      {s:'left', bg:`linear-gradient(to right,${hex} 50%,#000 50%)`, lbl:'Left'},
+      {s:'right',bg:`linear-gradient(to right,#000 50%,${hex} 50%)`, lbl:'Right'},
+    ];
+    subs.forEach(({s,bg,lbl})=>{
+      const c=document.createElement('div');c.className='pc';
+      c.style.background=bg;c.dataset.ci=i;c.dataset.sub=s;
+      c.title=`${CNAME[i]} — ${lbl}`;
+      c.addEventListener('click',ev=>{ev.stopPropagation();
+        if(ev.shiftKey||ev.ctrlKey)setActiveBG(i,s);else setActiveFG(i,s);});
+      c.addEventListener('contextmenu',ev=>{ev.preventDefault();ev.stopPropagation();setActiveBG(i,s);});
+      cells.appendChild(c);
+    });
+    e.appendChild(cells);g.appendChild(e);
+  }
+  // Black entry — full width
+  const blk=document.createElement('div');
+  blk.className='pe pe-black';blk.id='pe-black';
+  blk.style.gridColumn='1/-1';
+  const bnm=document.createElement('div');bnm.className='pname';bnm.textContent='Black (Both Off)';
+  blk.appendChild(bnm);
+  const bcells=document.createElement('div');bcells.className='pcells';
+  bcells.style.gridTemplateColumns='1fr';
+  const bc=document.createElement('div');bc.className='pc';
+  bc.style.background='#000';bc.dataset.ci=-1;bc.dataset.sub='black';
+  bc.title='Black — both pixels off';
+  bc.style.height='26px';
+  bc.addEventListener('click',ev=>{ev.stopPropagation();
+    if(ev.shiftKey||ev.ctrlKey)setActiveBG(0,'black');else setActiveFG(0,'black');});
+  bc.addEventListener('contextmenu',ev=>{ev.preventDefault();setActiveBG(0,'black');});
+  bcells.appendChild(bc);blk.appendChild(bcells);g.appendChild(blk);
+}
+
+function setActiveFG(ci,sub){S.fg={c:ci,sub};refreshPal();updateSwatches()}
+function setActiveBG(ci,sub){S.bg={c:ci,sub};refreshPal();updateSwatches()}
+
+function refreshPal(){
+  document.querySelectorAll('.pe').forEach(e=>e.classList.remove('act'));
+  document.querySelectorAll('.pc').forEach(c=>c.classList.remove('pca'));
+  // highlight FG
+  const fg=S.fg;
+  if(fg.sub==='black'){document.getElementById('pe-black')?.classList.add('act')}
+  else{
+    const pe=document.getElementById('pe-'+fg.c);
+    if(pe)pe.classList.add('act');
+    const pc=pe?.querySelector(`.pc[data-sub="${fg.sub}"]`);
+    if(pc)pc.classList.add('pca');
+  }
+}
+
+function swatchGrad(c,sub){
+  if(sub==='black')return'#000';
+  const rgb=CDISP[c];
+  const hex='#'+rgb.map(v=>v.toString(16).padStart(2,'0')).join('');
+  if(sub==='left') return`linear-gradient(to right,${hex} 50%,#000 50%)`;
+  if(sub==='right')return`linear-gradient(to right,#000 50%,${hex} 50%)`;
+  return hex;
+}
+function updateSwatches(){
+  document.getElementById('fgs').style.background=swatchGrad(S.fg.c,S.fg.sub);
+  document.getElementById('bgs').style.background=swatchGrad(S.bg.c,S.bg.sub);
+}
+
+// ══════════════════════════════════════════════════════════
+// CANVAS EVENTS
+// ══════════════════════════════════════════════════════════
+let shStart=null;
+
+function ccXY(ev){
+  const r=MC.getBoundingClientRect();
+  const sx=S.aspect==='coco'?(4/3)/(WP/HP):1;
+  return[Math.floor((ev.clientX-r.left)/(S.zoom*sx)),
+         Math.floor((ev.clientY-r.top)/S.zoom)];
+}
+
+MC.addEventListener('contextmenu',e=>e.preventDefault());
+MC.addEventListener('wheel',e=>{e.preventDefault();setZoom(S.zoom+(e.deltaY<0?1:-1))},{passive:false});
+
+MC.addEventListener('pointerdown',ev=>{
+  ev.preventDefault();MC.setPointerCapture(ev.pointerId);
+  const[x,y]=ccXY(ev);if(x<0||y<0||x>=WP||y>=HP)return;
+  S.dn=true;S.sx=snapX(x);S.sy=snapY(y);S.lpx=x;S.lpy=y;
+  const ir=ev.button===2,src=ir?S.bg:S.fg;
+  const{c,sub}=src;
+
+  if(S.tool==='pan'){
+    S.panSt={mx:ev.clientX,my:ev.clientY,
+      sl:document.getElementById('cwrap').scrollLeft,
+      st:document.getElementById('cwrap').scrollTop};return;
+  }
+  if(S.tool==='picker'){
+    const cx=Math.floor(x/2)*2;
+    const vL=gpx(cx,y),vR=gpx(cx+1,y);
+    const lOn=don(vL),rOn=don(vR);
+    const pc2=lOn?dc(vL):rOn?dc(vR):0;
+    const ps=lOn&&rOn?'full':lOn?'left':rOn?'right':'black';
+    if(ir)setActiveBG(pc2,ps);else setActiveFG(pc2,ps);return;
+  }
+  if(['pencil','eraser'].includes(S.tool)){pu();paintCell(snapX(x),snapY(y),c,sub);render();return}
+  if(S.tool==='fill'){pu();fill(x,y,c,sub);render();return}
+  shStart={x:snapX(x),y:snapY(y),c,sub,snap:S.px.slice()};
+});
+
+MC.addEventListener('pointermove',ev=>{
+  const[x,y]=ccXY(ev);
+  const cx2=Math.floor(x/2);
+  const lx=cx2*2,vL=gpx(lx,y),vR=gpx(lx+1,y);
+  const lOn=don(vL),rOn=don(vR);
+  const cn=lOn?CNAME[dc(vL)]:rOn?CNAME[dc(vR)]:'Black';
+  document.getElementById('bot').title=`Cell(${cx2},${y}) Color:${cn} L:${lOn} R:${rOn}`;
+
+  if(!S.dn)return;
+  if(S.tool==='pan'&&S.panSt){
+    const wr=document.getElementById('cwrap');
+    wr.scrollLeft=S.panSt.sl-(ev.clientX-S.panSt.mx);
+    wr.scrollTop=S.panSt.st-(ev.clientY-S.panSt.my);return;
+  }
+  const ir=ev.buttons===2,src=ir?S.bg:S.fg;const{c,sub}=src;
+  const cx3=Math.max(0,Math.min(WP-1,x)),cy3=Math.max(0,Math.min(HP-1,y));
+  if(['pencil','eraser'].includes(S.tool)){
+    drawLine(S.lpx,S.lpy,cx3,cy3,c,sub);S.lpx=cx3;S.lpy=cy3;render();return;
+  }
+  if(shStart){
+    S.px=shStart.snap.slice();
+    const{x:x0,y:y0,c:sc,sub:ss}=shStart;
+    const ex=snapX(cx3),ey=snapY(cy3);
+    if(S.tool==='line')drawLine(x0,y0,ex,ey,sc,ss);
+    if(S.tool==='rect')drawRect(x0,y0,ex,ey,sc,ss,false);
+    if(S.tool==='rectfill')drawRect(x0,y0,ex,ey,sc,ss,true);
+    if(S.tool==='circle')drawCircle(x0,y0,ex,ey,sc,ss,false);
+    if(S.tool==='circlefill')drawCircle(x0,y0,ex,ey,sc,ss,true);
+    render();
+  }
+});
+
+MC.addEventListener('pointerup',ev=>{
+  S.dn=false;
+  if(shStart){pu();shStart=null;render()}
+  S.panSt=null;
+});
+
+// ══════════════════════════════════════════════════════════
+// MENUS + ACCORDION
+// ══════════════════════════════════════════════════════════
+function closeMenus(){
+  document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('open'));
+  document.querySelectorAll('.mdrop').forEach(d=>d.classList.remove('open'));
+}
+['file','edit','view','help'].forEach(n=>{
+  document.getElementById('mb-'+n).addEventListener('click',ev=>{
+    ev.stopPropagation();
+    const d=document.getElementById('md-'+n);
+    const was=d.classList.contains('open');closeMenus();
+    if(!was){d.classList.add('open');document.getElementById('mb-'+n).classList.add('open');}
+  });
+});
+document.addEventListener('click',closeMenus);
+
+// Accordion
+document.querySelectorAll('.acc-hdr').forEach(hdr=>{
+  hdr.addEventListener('click',()=>{
+    const panel=document.getElementById('panel-'+hdr.dataset.panel);
+    const open=hdr.classList.toggle('open');
+    panel.classList.toggle('open',open);
+  });
+});
+
+function showModal(id){
+  document.getElementById('mback').classList.add('show');
+  document.querySelectorAll('.mbox').forEach(m=>m.style.display='none');
+  document.getElementById(id).style.display='block';
+}
+function hideModal(){
+  document.getElementById('mback').classList.remove('show');
+  document.querySelectorAll('.mbox').forEach(m=>m.style.display='none');
+}
+
+// File
+document.getElementById('mi-new').addEventListener('click',()=>{if(confirm('New image? (clears canvas)')){{pu();S.px=new Uint8Array(WP*HP);render()}}closeMenus()});
+document.getElementById('mi-opens24').addEventListener('click',()=>{document.getElementById('fi-s24').click();closeMenus()});
+document.getElementById('mi-openimg').addEventListener('click',()=>{document.getElementById('fi-img').click();closeMenus()});
+document.getElementById('mi-saves24').addEventListener('click',()=>{dlFile(new Blob([toS24()],{type:'application/octet-stream'}),'image.S24');closeMenus()});
+document.getElementById('mi-savepng').addEventListener('click',()=>{expPNG();closeMenus()});
+document.getElementById('mi-savebmp').addEventListener('click',()=>{expBMP();closeMenus()});
+document.getElementById('mi-savebas').addEventListener('click',()=>{expBAS();closeMenus()});
+document.getElementById('mi-saveasm').addEventListener('click',()=>{expASM();closeMenus()});
+
+// Edit
+document.getElementById('mi-undo').addEventListener('click',()=>{undo();closeMenus()});
+document.getElementById('mi-redo').addEventListener('click',()=>{redo();closeMenus()});
+document.getElementById('mi-clear').addEventListener('click',()=>{pu();S.px=new Uint8Array(WP*HP);render();closeMenus()});
+document.getElementById('mi-fillall').addEventListener('click',()=>{
+  pu();const{c,sub}=S.fg;for(let y=0;y<HP;y++)for(let x=0;x<WP;x+=2)paintCell(x,y,c,sub);render();closeMenus()});
+document.getElementById('mi-invert').addEventListener('click',()=>{
+  pu();for(let i=0;i<S.px.length;i++){const v=S.px[i];S.px[i]=ep(dc(v),!don(v))}render();closeMenus()});
+
+// View — aspect
+function setAspect(a){
+  S.aspect=a;
+  const isCoco=a==='coco';
+  document.getElementById('mi-coco').classList.toggle('ck',isCoco);
+  document.getElementById('mi-modern').classList.toggle('ck',!isCoco);
+  const lbl=isCoco?'CoCo 4:3':'Square 1:1';
+  document.getElementById('st-asp').textContent=lbl;
+  document.getElementById('iasp').textContent=lbl;
+  applyAspect();drawGrid();
+}
+document.getElementById('mi-coco').addEventListener('click',()=>{setAspect('coco');closeMenus()});
+document.getElementById('mi-modern').addEventListener('click',()=>{setAspect('modern');closeMenus()});
+
+// Grid
+function upGridInfo(){
+  const on=S.showCG||S.showPG;
+  document.getElementById('igrid').textContent=on?`${S.gridSz}cell`:'Off';
+  document.getElementById('isnap').textContent=S.snapG?'On':'Off';
+}
+document.getElementById('mi-gcell').addEventListener('click',()=>{S.showCG=!S.showCG;document.getElementById('mi-gcell').classList.toggle('ck',S.showCG);upGridInfo();drawGrid();closeMenus()});
+document.getElementById('mi-gpix').addEventListener('click',()=>{S.showPG=!S.showPG;document.getElementById('mi-gpix').classList.toggle('ck',S.showPG);upGridInfo();drawGrid();closeMenus()});
+document.getElementById('mi-gsnap').addEventListener('click',()=>{S.snapG=!S.snapG;document.getElementById('mi-gsnap').classList.toggle('ck',S.snapG);upGridInfo();closeMenus()});
+document.getElementById('mi-gset').addEventListener('click',()=>{
+  document.getElementById('gs-cell').checked=S.showCG;
+  document.getElementById('gs-pix').checked=S.showPG;
+  document.getElementById('gs-snap').checked=S.snapG;
+  document.getElementById('gs-size').value=S.gridSz;
+  document.getElementById('gs-ccol').value=S.gcol;
+  document.getElementById('gs-pcol').value=S.pcol;
+  document.getElementById('gs-opac').value=S.gopac;
+  document.getElementById('rv-opac').textContent=S.gopac.toFixed(2);
+  showModal('m-grid');closeMenus();
+});
+document.getElementById('gs-opac').addEventListener('input',e=>{document.getElementById('rv-opac').textContent=parseFloat(e.target.value).toFixed(2)});
+document.getElementById('btn-gcancel').addEventListener('click',hideModal);
+document.getElementById('btn-gok').addEventListener('click',()=>{
+  S.showCG=document.getElementById('gs-cell').checked;
+  S.showPG=document.getElementById('gs-pix').checked;
+  S.snapG=document.getElementById('gs-snap').checked;
+  S.gridSz=Math.max(1,parseInt(document.getElementById('gs-size').value)||1);
+  S.gcol=document.getElementById('gs-ccol').value;
+  S.pcol=document.getElementById('gs-pcol').value;
+  S.gopac=parseFloat(document.getElementById('gs-opac').value);
+  document.getElementById('mi-gcell').classList.toggle('ck',S.showCG);
+  document.getElementById('mi-gpix').classList.toggle('ck',S.showPG);
+  document.getElementById('mi-gsnap').classList.toggle('ck',S.snapG);
+  upGridInfo();drawGrid();hideModal();
+});
+
+// Zoom
+document.getElementById('mi-zin').addEventListener('click',()=>{setZoom(S.zoom+1);closeMenus()});
+document.getElementById('mi-zout').addEventListener('click',()=>{setZoom(S.zoom-1);closeMenus()});
+document.getElementById('mi-zfit').addEventListener('click',()=>{
+  const wr=document.getElementById('cwrap');
+  setZoom(Math.max(1,Math.floor(Math.min(wr.clientWidth/WP,wr.clientHeight/HP))));closeMenus()});
+document.getElementById('mi-z1').addEventListener('click',()=>{setZoom(1);closeMenus()});
+document.getElementById('mi-z2').addEventListener('click',()=>{setZoom(2);closeMenus()});
+document.getElementById('mi-z4').addEventListener('click',()=>{setZoom(4);closeMenus()});
+document.getElementById('bzo').addEventListener('click',()=>setZoom(S.zoom-1));
+document.getElementById('bzi').addEventListener('click',()=>setZoom(S.zoom+1));
+
+// About
+document.getElementById('mi-about').addEventListener('click',()=>{showModal('m-about');closeMenus()});
+document.getElementById('btn-aok').addEventListener('click',hideModal);
+
+// Tools
+document.querySelectorAll('.tbtn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.tbtn').forEach(x=>x.classList.remove('act'));
+    b.classList.add('act');S.tool=b.dataset.tool;
+    MC.style.cursor=S.tool==='pan'?'grab':'crosshair';
+    document.getElementById('st-tool').textContent=b.title.split(' (')[0];
+  });
+});
+
+// Swap
+document.getElementById('swapbtn').addEventListener('click',()=>{
+  const t=Object.assign({},S.fg);S.fg=Object.assign({},S.bg);S.bg=t;
+  refreshPal();updateSwatches();
+});
+
+// File inputs
+document.getElementById('fi-s24').addEventListener('change',ev=>{
+  const f=ev.target.files[0];if(!f)return;
+  const rd=new FileReader();rd.onload=e=>{
+    const b=new Uint8Array(e.target.result);
+    if(b.length<6144){alert('Invalid .S24 file (must be 6144+ bytes)');return}
+    pu();S.px=fromS24(b);render();
+  };rd.readAsArrayBuffer(f);ev.target.value='';
+});
+
+document.getElementById('fi-img').addEventListener('change',ev=>{
+  const f=ev.target.files[0];if(!f)return;
+  const img=new Image(),url=URL.createObjectURL(f);
+  img.onload=()=>{
+    const o=document.createElement('canvas');o.width=img.naturalWidth;o.height=img.naturalHeight;
+    o.getContext('2d').drawImage(img,0,0);
+    S.srcImg=o.getContext('2d').getImageData(0,0,img.naturalWidth,img.naturalHeight);
+    S.srcW=img.naturalWidth;S.srcH=img.naturalHeight;
+    URL.revokeObjectURL(url);openConvModal();
+  };img.src=url;ev.target.value='';
+});
+
+// ══════════════════════════════════════════════════════════
+// CONVERT MODAL
+// ══════════════════════════════════════════════════════════
+function getConvOpts(){return{
+  dither:document.getElementById('cv-dither').value,
+  bright:parseFloat(document.getElementById('cv-bright').value),
+  contrast:parseFloat(document.getElementById('cv-contrast').value),
+  sat:parseFloat(document.getElementById('cv-sat').value),
+  checker:parseFloat(document.getElementById('cv-checker').value),
+};}
+
+function openConvModal(){
+  document.getElementById('cv-dither').value=S.convDither;
+  document.getElementById('cv-bright').value=S.convBright;document.getElementById('rv-bright').textContent=S.convBright.toFixed(2);
+  document.getElementById('cv-contrast').value=S.convContrast;document.getElementById('rv-contrast').textContent=S.convContrast.toFixed(2);
+  document.getElementById('cv-sat').value=S.convSat;document.getElementById('rv-sat').textContent=S.convSat.toFixed(2);
+  document.getElementById('cv-checker').value=S.convChecker;document.getElementById('rv-checker').textContent=S.convChecker.toFixed(2);
+  showModal('m-conv');doPreview();
+}
+
+function doPreview(){
+  if(!S.srcImg)return;
+  // Draw source preview
+  const sc=document.getElementById('pv-src');
+  sc.width=S.srcW;sc.height=S.srcH;
+  sc.getContext('2d').putImageData(S.srcImg,0,0);
+
+  // Convert and draw SG24 preview at 2× in 4:3 aspect
+  const raw=scaleToSG24(S.srcImg,S.srcW,S.srcH);
+  const opts=getConvOpts();
+  const pix=convertImg(raw,opts);
+  S.pendConv=pix;
+
+  // Render SG24 preview: 2× zoom with 4:3 aspect
+  const cocoW=Math.round(WP*2*(4/3)/(WP/HP)); // ~171px wide
+  const cocoH=HP*2; // 384px tall
+  const dc2=document.getElementById('pv-dst');
+  dc2.width=cocoW;dc2.height=cocoH;
+  const dctx=dc2.getContext('2d');
+  const id=dctx.createImageData(cocoW,cocoH);
+  for(let y=0;y<cocoH;y++){
+    for(let x=0;x<cocoW;x++){
+      const sx=Math.floor(x/2*(WP/HP)/(4/3));
+      const sy=Math.floor(y/2);
+      if(sx>=0&&sx<WP&&sy>=0&&sy<HP){
+        const v=pix[sy*WP+sx];
+        const rgb=don(v)?CDISP[dc(v)]:CBLK;
+        const i=(y*cocoW+x)*4;
+        id.data[i]=rgb[0];id.data[i+1]=rgb[1];id.data[i+2]=rgb[2];id.data[i+3]=255;
+      }
+    }
+  }
+  dctx.putImageData(id,0,0);
+}
+
+[['cv-bright','rv-bright'],['cv-contrast','rv-contrast'],['cv-sat','rv-sat'],['cv-checker','rv-checker']].forEach(([s,r])=>{
+  document.getElementById(s).addEventListener('input',e=>{
+    document.getElementById(r).textContent=parseFloat(e.target.value).toFixed(2);
+    doPreview();
+  });
+});
+document.getElementById('cv-dither').addEventListener('change',doPreview);
+document.getElementById('btn-cprev').addEventListener('click',doPreview);
+document.getElementById('btn-ccancel').addEventListener('click',hideModal);
+document.getElementById('btn-capply').addEventListener('click',()=>{
+  if(S.pendConv){pu();S.px=S.pendConv;render()}hideModal();
+});
+
+// Keyboard
+document.addEventListener('keydown',ev=>{
+  if(ev.target.tagName==='INPUT'||ev.target.tagName==='SELECT')return;
+  if(ev.ctrlKey||ev.metaKey){
+    if(ev.key.toLowerCase()==='z'){ev.preventDefault();undo()}
+    if(ev.key.toLowerCase()==='y'){ev.preventDefault();redo()}
+    return;
+  }
+  const tm={p:'pencil',f:'fill',k:'picker',l:'line',r:'rect',c:'circle',e:'eraser'};
+  if(tm[ev.key.toLowerCase()]){
+    const t=tm[ev.key.toLowerCase()];
+    document.querySelectorAll('.tbtn').forEach(b=>b.classList.toggle('act',b.dataset.tool===t));
+    S.tool=t;MC.style.cursor='crosshair';
+    document.getElementById('st-tool').textContent=t.charAt(0).toUpperCase()+t.slice(1);
+  }
+  if(ev.key==='+'||ev.key==='=')setZoom(S.zoom+1);
+  if(ev.key==='-')setZoom(S.zoom-1);
+});
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+buildPalette();refreshPal();updateSwatches();
+setZoom(4);setAspect('coco');upGridInfo();
+render();drawGrid();
+</script>
+</body>
+</html>
