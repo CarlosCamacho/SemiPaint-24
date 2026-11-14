@@ -2,7 +2,14 @@
 
 A browser-based image editor for the **TRS-80 Color Computer (CoCo)** Semigraphics 24 (SG24) display mode, running entirely in a single HTML file with no installation required.
 
-![SemiPaint24](screenshot.png)
+## Screenshots
+
+| | |
+|---|---|
+| ![File menu and canvas](screenshots/screenshot-file-menu.png) | ![View menu options](screenshots/screenshot-view-menu.png) |
+| *File menu — open, convert, and export options* | *View menu — aspect ratio, grid, and zoom controls* |
+| ![Pumpkin drawing](screenshots/screenshot-pumpkin.png) | ![Convert Image modal](screenshots/screenshot-convert.png) |
+| *Freehand drawing with the pencil tool (pumpkin)* | *Convert Image modal with live SG24 preview* |
 
 ---
 
